@@ -1,0 +1,131 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+.app-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+.toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 4px 10px;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.mindmap-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  padding-top: 76px;
+  background-size: 32px 32px;
+  cursor: default;
+}
+
+.mindmap-container.panning {
+  cursor: grab;
+}
+
+.mindmap-container.panning:active {
+  cursor: grabbing;
+}
+
+.mindmap-content {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  left: 0;
+  top: 0;
+}
+
+.mindmap-node {
+  transition: opacity 0.15s ease;
+}
+
+.mindmap-node:hover .node-body {
+  transform: scale(1.04);
+}
+
+.mindmap-node:hover .collapse-btn {
+  opacity: 1 !important;
+}
+
+.mindmap-node .node-body.selected {
+  transform: scale(1.02);
+}
+
+.mindmap-node .node-body.selected:hover {
+  transform: scale(1.04);
+}
+
+.context-menu {
+  position: fixed;
+  border-radius: 10px;
+  padding: 6px 0;
+  min-width: 180px;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+}
+
+.hint {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 16px;
+  border-radius: 16px;
+  font-size: 11px;
+  border: 1px solid;
+  letter-spacing: 0.3px;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.minimap {
+  transition: opacity 0.2s ease;
+}
+
+.minimap:hover {
+  opacity: 1 !important;
+}
+
+textarea {
+  font-family: inherit;
+}
