@@ -1,5 +1,5 @@
-import React from 'react';
-import { LAYOUT_TYPES, LAYOUT_LABELS, PRIORITY_ICONS, MARKER_ICONS } from '../dataModel';
+import React, { useState } from 'react';
+import { LAYOUT_TYPES, LAYOUT_LABELS, PRIORITY_ICONS, MARKER_ICONS, STICKER_LIST } from '../dataModel';
 
 const ContextMenu = React.memo(({
   contextMenu, theme,
@@ -8,7 +8,18 @@ const ContextMenu = React.memo(({
   isRoot, node,
   layoutType, onLayoutChange,
   onToggleMarker, onSetPriority, onToggleNote,
+  onStartLink, isLinking, onDeleteRelationship, hasSelectedRel,
+  onToggleCheckbox, onAddLabel, onSetLink, onSetSticker, onSetTask,
+  onFocusBranch, onExportPNG, onExportMarkdown,
 }) => {
+  const [labelInput, setLabelInput] = useState('');
+  const [linkInput, setLinkInput] = useState('');
+  const [showLabelInput, setShowLabelInput] = useState(false);
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [showStickerPicker, setShowStickerPicker] = useState(false);
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [taskForm, setTaskForm] = useState({ startDate: '', endDate: '', progress: 0, assignee: '' });
+
   const itemStyle = {
     padding: '7px 14px',
     color: theme.contextMenuItemColor,
@@ -70,6 +81,86 @@ const ContextMenu = React.memo(({
             'Space'
           )}
           {onToggleNote && renderItem('编辑备注', onToggleNote, '📝')}
+          {onStartLink && renderItem(isLinking ? '取消关联' : '添加关联线', onStartLink, '🔗')}
+          <div style={sep} />
+
+          {onToggleCheckbox && renderItem(
+            node?.checkbox !== null && node?.checkbox !== undefined ? (node.checkbox ? '取消待办' : '标记完成') : '添加待办',
+            onToggleCheckbox,
+            node?.checkbox ? '☑' : '☐'
+          )}
+
+          {showLabelInput ? (
+            <div style={{ padding: '4px 14px', display: 'flex', gap: '4px' }}>
+              <input value={labelInput} onChange={e => setLabelInput(e.target.value)} placeholder="输入标签"
+                onKeyDown={e => { if (e.key === 'Enter' && labelInput.trim() && onAddLabel) { onAddLabel(labelInput.trim()); setLabelInput(''); setShowLabelInput(false); onClose(); } if (e.key === 'Escape') { setShowLabelInput(false); setLabelInput(''); } }}
+                style={{ flex: 1, padding: '3px 6px', border: `1px solid ${theme.toolbarBtnBorder}`, borderRadius: '3px', backgroundColor: theme.toolbarBtnBg, color: theme.toolbarBtnColor, fontSize: '11px', outline: 'none' }}
+                autoFocus />
+            </div>
+          ) : (
+            onAddLabel && renderItem('添加标签', () => setShowLabelInput(true), '🏷')
+          )}
+
+          {showLinkInput ? (
+            <div style={{ padding: '4px 14px', display: 'flex', gap: '4px' }}>
+              <input value={linkInput} onChange={e => setLinkInput(e.target.value)} placeholder="输入链接URL"
+                onKeyDown={e => { if (e.key === 'Enter' && linkInput.trim() && onSetLink) { onSetLink(linkInput.trim()); setLinkInput(''); setShowLinkInput(false); onClose(); } if (e.key === 'Escape') { setShowLinkInput(false); setLinkInput(''); } }}
+                style={{ flex: 1, padding: '3px 6px', border: `1px solid ${theme.toolbarBtnBorder}`, borderRadius: '3px', backgroundColor: theme.toolbarBtnBg, color: theme.toolbarBtnColor, fontSize: '11px', outline: 'none' }}
+                autoFocus />
+            </div>
+          ) : (
+            onSetLink && renderItem('设置链接', () => setShowLinkInput(true), '🔗')
+          )}
+
+          {showStickerPicker ? (
+            <div style={{ padding: '6px 14px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                {STICKER_LIST.map(s => (
+                  <span key={s} style={{ cursor: 'pointer', fontSize: '16px', padding: '2px' }}
+                    onClick={() => { onSetSticker && onSetSticker(s); setShowStickerPicker(false); onClose(); }}
+                  >{s}</span>
+                ))}
+              </div>
+            </div>
+          ) : (
+            onSetSticker && renderItem('添加贴纸', () => setShowStickerPicker(true), '🎨')
+          )}
+
+          {showTaskForm ? (
+            <div style={{ padding: '6px 14px', fontSize: '11px' }}>
+              <div style={{ marginBottom: '4px' }}>
+                <label style={{ fontSize: '10px', color: theme.contextMenuItemColor, display: 'block', marginBottom: '2px' }}>开始日期</label>
+                <input type="date" value={taskForm.startDate} onChange={e => setTaskForm(p => ({ ...p, startDate: e.target.value }))}
+                  style={{ width: '100%', padding: '2px 4px', fontSize: '10px', border: `1px solid ${theme.toolbarBtnBorder}`, borderRadius: '3px', backgroundColor: theme.toolbarBtnBg, color: theme.toolbarBtnColor }} />
+              </div>
+              <div style={{ marginBottom: '4px' }}>
+                <label style={{ fontSize: '10px', color: theme.contextMenuItemColor, display: 'block', marginBottom: '2px' }}>结束日期</label>
+                <input type="date" value={taskForm.endDate} onChange={e => setTaskForm(p => ({ ...p, endDate: e.target.value }))}
+                  style={{ width: '100%', padding: '2px 4px', fontSize: '10px', border: `1px solid ${theme.toolbarBtnBorder}`, borderRadius: '3px', backgroundColor: theme.toolbarBtnBg, color: theme.toolbarBtnColor }} />
+              </div>
+              <div style={{ marginBottom: '4px' }}>
+                <label style={{ fontSize: '10px', color: theme.contextMenuItemColor, display: 'block', marginBottom: '2px' }}>进度 ({taskForm.progress}%)</label>
+                <input type="range" min="0" max="100" value={taskForm.progress} onChange={e => setTaskForm(p => ({ ...p, progress: parseInt(e.target.value) }))}
+                  style={{ width: '100%' }} />
+              </div>
+              <div style={{ marginBottom: '4px' }}>
+                <label style={{ fontSize: '10px', color: theme.contextMenuItemColor, display: 'block', marginBottom: '2px' }}>负责人</label>
+                <input value={taskForm.assignee} onChange={e => setTaskForm(p => ({ ...p, assignee: e.target.value }))}
+                  style={{ width: '100%', padding: '2px 4px', fontSize: '10px', border: `1px solid ${theme.toolbarBtnBorder}`, borderRadius: '3px', backgroundColor: theme.toolbarBtnBg, color: theme.toolbarBtnColor }} />
+              </div>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <button style={{ flex: 1, padding: '4px', border: `1px solid ${theme.toolbarBtnBorder}`, borderRadius: '3px', backgroundColor: theme.toolbarBtnBg, color: theme.toolbarBtnColor, cursor: 'pointer', fontSize: '10px' }}
+                  onClick={() => { onSetTask && onSetTask(taskForm); setShowTaskForm(false); onClose(); }}>确认</button>
+                <button style={{ flex: 1, padding: '4px', border: `1px solid ${theme.toolbarBtnBorder}`, borderRadius: '3px', backgroundColor: theme.toolbarBtnBg, color: theme.toolbarBtnColor, cursor: 'pointer', fontSize: '10px' }}
+                  onClick={() => { setShowTaskForm(false); }}>取消</button>
+              </div>
+            </div>
+          ) : (
+            onSetTask && renderItem('设置任务', () => setShowTaskForm(true), '📊')
+          )}
+
+          {onFocusBranch && renderItem('聚焦此分支', onFocusBranch, '🔍')}
+
           <div style={sep} />
           <div style={subMenuStyle}>优先级</div>
           <div style={{ display: 'flex', gap: '2px', padding: '2px 14px' }}>
@@ -98,6 +189,8 @@ const ContextMenu = React.memo(({
           {renderItem('新建脑图', onNewFile, '📄')}
           {renderItem('导入JSON', onImport, '📂')}
           {renderItem('导出JSON', onExport, '💾')}
+          {onExportPNG && renderItem('导出PNG', onExportPNG, '🖼')}
+          {onExportMarkdown && renderItem('导出Markdown', onExportMarkdown, '📝')}
           <div style={sep} />
           <div style={subMenuStyle}>布局结构</div>
           {Object.entries(LAYOUT_TYPES).map(([key, type]) => (

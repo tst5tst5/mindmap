@@ -29,3 +29,8 @@ dist-ssr
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Electron build
+dist-electron/
+release-build/
+release/

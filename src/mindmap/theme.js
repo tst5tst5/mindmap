@@ -4,16 +4,21 @@ export const BRANCH_COLORS = [
   '#8BC34A', '#FF7043', '#607D8B',
 ];
 
-export function getBranchColor(nodes, nodeId) {
+export function getBranchColor(nodes, nodeId, colorScheme = null) {
   let current = nodes.find(n => n.id === nodeId);
   if (!current) return BRANCH_COLORS[0];
 
-  if (!current.parentId) return '#6c5ce7';
+  if (!current.parentId) return colorScheme ? colorScheme.root : '#6c5ce7';
 
   while (current.parentId) {
     const parent = nodes.find(n => n.id === current.parentId);
     if (!parent) break;
     if (!parent.parentId) {
+      if (colorScheme) {
+        const rootChildren = nodes.filter(n => n.parentId === parent.id);
+        const idx = rootChildren.findIndex(n => n.id === current.id);
+        return colorScheme.colors[idx % colorScheme.colors.length];
+      }
       const rootChildren = nodes.filter(n => n.parentId === parent.id);
       const idx = rootChildren.findIndex(n => n.id === current.id);
       return BRANCH_COLORS[idx % BRANCH_COLORS.length];

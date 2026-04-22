@@ -4,13 +4,22 @@ const NotePanel = React.memo(({ node, theme, onUpdateNote, onClose }) => {
   const [text, setText] = useState(node?.note || '');
   const [saved, setSaved] = useState(true);
   const textareaRef = useRef(null);
-  const panelRef = useRef(null);
+  const lastSavedText = useRef(node?.note || '');
 
   useEffect(() => {
     setText(node?.note || '');
     setSaved(true);
+    lastSavedText.current = node?.note || '';
     if (textareaRef.current) textareaRef.current.focus();
   }, [node?.id]);
+
+  const doSave = () => {
+    if (text !== lastSavedText.current) {
+      onUpdateNote(text);
+      lastSavedText.current = text;
+    }
+    setSaved(true);
+  };
 
   const handleChange = (e) => {
     setText(e.target.value);
@@ -18,29 +27,38 @@ const NotePanel = React.memo(({ node, theme, onUpdateNote, onClose }) => {
   };
 
   const handleSave = () => {
-    onUpdateNote(text);
-    setSaved(true);
+    doSave();
   };
 
   const handleClose = () => {
-    if (!saved) {
-      handleSave();
-    }
+    doSave();
     onClose();
+  };
+
+  const handleBlur = () => {
+    doSave();
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      handleSave();
+      doSave();
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (text !== lastSavedText.current) {
+        onUpdateNote(text);
+        lastSavedText.current = text;
+      }
+    };
+  }, [text]);
 
   if (!node) return null;
 
   return (
     <div
-      ref={panelRef}
       style={{
         position: 'fixed',
         right: '20px',
@@ -90,6 +108,7 @@ const NotePanel = React.memo(({ node, theme, onUpdateNote, onClose }) => {
         ref={textareaRef}
         value={text}
         onChange={handleChange}
+        onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder="在此输入备注内容... (Ctrl+S 保存)"
         style={{
