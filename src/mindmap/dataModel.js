@@ -4,6 +4,8 @@ export function generateId() {
   return `node_${Date.now()}_${++idCounter}`;
 }
 
+export const APP_VERSION = '2.0.0';
+
 export function createNode(text = '新节点', parentId = null) {
   return {
     id: generateId(),
