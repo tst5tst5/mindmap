@@ -1052,22 +1052,18 @@ export function getRelationshipPaths(relationships, positions) {
 
     const midX = (startX + endX) / 2;
     const midY = (startY + endY) / 2;
-    const offset = Math.max(30, Math.sqrt(dx * dx + dy * dy) * 0.15);
+    // Make relationship lines visibly arc around nodes to avoid being fully hidden by node bodies.
+    const dist = Math.hypot(endX - startX, endY - startY);
+    const baseOffset = Math.max(60, dist * 0.22);
 
-    let cp1X, cp1Y, cp2X, cp2Y;
-    if (Math.abs(dx) > Math.abs(dy)) {
-      cp1X = startX + (dx > 0 ? offset : -offset);
-      cp1Y = startY;
-      cp2X = endX - (dx > 0 ? offset : -offset);
-      cp2Y = endY;
-    } else {
-      cp1X = startX;
-      cp1Y = startY + (dy > 0 ? offset : -offset);
-      cp2X = endX;
-      cp2Y = endY - (dy > 0 ? offset : -offset);
-    }
+    // Stable side selection so multiple relationships don't all overlap on the same curve.
+    const dirSign = (String(rel.id).split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 2 === 0) ? 1 : -1;
+    const nx = dist === 0 ? 0 : (-(endY - startY) / dist);
+    const ny = dist === 0 ? 0 : ((endX - startX) / dist);
+    const curveX = midX + nx * baseOffset * dirSign;
+    const curveY = midY + ny * baseOffset * dirSign;
 
-    const pathData = `M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}`;
+    const pathData = `M ${startX} ${startY} Q ${curveX} ${curveY}, ${endX} ${endY}`;
 
     paths.push({
       key: rel.id,
