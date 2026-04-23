@@ -446,9 +446,12 @@ function App() {
             })}
             {relPaths.map(rp => (
               <g key={rp.key} onClick={() => handleRelClick(rp.relId)} style={{ cursor: 'pointer' }}>
-                <path d={rp.pathData} stroke={selectedRelId === rp.relId ? '#e17055' : '#6c5ce7'} strokeWidth={selectedRelId === rp.relId ? 3 : 2} strokeDasharray="6 3" strokeLinecap="round" fill="none" opacity={selectedRelId === rp.relId ? 1 : 0.5} />
-                <path d={rp.pathData} stroke="transparent" strokeWidth="12" fill="none" />
-                {rp.label && <text x={rp.midX} y={rp.midY - 6} textAnchor="middle" fill={selectedRelId === rp.relId ? '#e17055' : '#6c5ce7'} fontSize="11" fontWeight="500">{rp.label}</text>}
+                {/* Underlay for contrast (helps in both light/dark themes) */}
+                <path d={rp.pathData} stroke={theme.canvasBg} strokeWidth={selectedRelId === rp.relId ? 6 : 5} strokeDasharray="6 3" strokeLinecap="round" fill="none" opacity={0.65} />
+                {/* Main relationship line */}
+                <path d={rp.pathData} stroke={selectedRelId === rp.relId ? '#ff6b6b' : '#a29bfe'} strokeWidth={selectedRelId === rp.relId ? 3.5 : 3} strokeDasharray="6 3" strokeLinecap="round" fill="none" opacity={selectedRelId === rp.relId ? 1 : 0.9} />
+                <path d={rp.pathData} stroke="transparent" strokeWidth="14" fill="none" />
+                {rp.label && <text x={rp.midX} y={rp.midY - 6} textAnchor="middle" fill={selectedRelId === rp.relId ? '#ff6b6b' : '#a29bfe'} fontSize="11" fontWeight="600">{rp.label}</text>}
               </g>
             ))}
           </svg>
