@@ -1009,6 +1009,14 @@ function getOrthogonalPaths(nodes, positions, layoutType) {
 export function getRelationshipPaths(relationships, positions) {
   const paths = [];
 
+  const computeQuadraticPoint = (sx, sy, cx, cy, ex, ey, t) => {
+    const mt = 1 - t;
+    return {
+      x: mt * mt * sx + 2 * mt * t * cx + t * t * ex,
+      y: mt * mt * sy + 2 * mt * t * cy + t * t * ey,
+    };
+  };
+
   relationships.forEach(rel => {
     const fromPos = positions[rel.fromId];
     const toPos = positions[rel.toId];
@@ -1052,26 +1060,31 @@ export function getRelationshipPaths(relationships, positions) {
 
     const midX = (startX + endX) / 2;
     const midY = (startY + endY) / 2;
-    // Make relationship lines visibly arc around nodes to avoid being fully hidden by node bodies.
     const dist = Math.hypot(endX - startX, endY - startY);
-    const baseOffset = Math.max(60, dist * 0.22);
 
-    // Stable side selection so multiple relationships don't all overlap on the same curve.
+    // Default control point: arc away from node bodies.
+    const baseOffset = Math.max(60, dist * 0.22);
     const dirSign = (String(rel.id).split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 2 === 0) ? 1 : -1;
     const nx = dist === 0 ? 0 : (-(endY - startY) / dist);
     const ny = dist === 0 ? 0 : ((endX - startX) / dist);
-    const curveX = midX + nx * baseOffset * dirSign;
-    const curveY = midY + ny * baseOffset * dirSign;
+    const defaultCX = midX + nx * baseOffset * dirSign;
+    const defaultCY = midY + ny * baseOffset * dirSign;
+
+    const curveX = rel.control?.x ?? defaultCX;
+    const curveY = rel.control?.y ?? defaultCY;
 
     const pathData = `M ${startX} ${startY} Q ${curveX} ${curveY}, ${endX} ${endY}`;
+    const labelPoint = computeQuadraticPoint(startX, startY, curveX, curveY, endX, endY, 0.5);
 
     paths.push({
       key: rel.id,
       pathData,
       relId: rel.id,
       label: rel.label,
-      midX,
-      midY,
+      midX: labelPoint.x,
+      midY: labelPoint.y,
+      controlX: curveX,
+      controlY: curveY,
       fromId: rel.fromId,
       toId: rel.toId,
     });

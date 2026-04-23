@@ -10,7 +10,9 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "electron:dev": "vite build && electron .",
-    "electron:build": "vite build && electron-builder --win"
+    "electron:build": "vite build && electron-builder --win",
+    "deploy": "powershell -NoProfile -ExecutionPolicy Bypass -File ./deploy.ps1",
+    "deploy:msg": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& ./deploy.ps1 -Message $env:MSG\""
   },
   "dependencies": {
     "html2canvas": "^1.4.1",

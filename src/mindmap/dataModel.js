@@ -253,13 +253,18 @@ export const COLOR_SCHEMES = [
 ];
 
 let relIdCounter = 0;
-export function createRelationship(fromId, toId, label = '') { return { id: `rel_${Date.now()}_${++relIdCounter}`, fromId, toId, label }; }
+export function createRelationship(fromId, toId, label = '') {
+  return { id: `rel_${Date.now()}_${++relIdCounter}`, fromId, toId, label, control: null };
+}
 export function addRelationship(relationships, fromId, toId, label = '') {
   if (relationships.some(r => (r.fromId === fromId && r.toId === toId) || (r.fromId === toId && r.toId === fromId))) return relationships;
   return [...relationships, createRelationship(fromId, toId, label)];
 }
 export function removeRelationship(relationships, relId) { return relationships.filter(r => r.id !== relId); }
 export function updateRelationshipLabel(relationships, relId, label) { return relationships.map(r => r.id === relId ? { ...r, label } : r); }
+export function updateRelationshipControl(relationships, relId, control) {
+  return relationships.map(r => r.id === relId ? { ...r, control } : r);
+}
 export function getRelationshipsForNode(relationships, nodeId) { return relationships.filter(r => r.fromId === nodeId || r.toId === nodeId); }
 export function cleanupRelationships(relationships, nodes) { const ids = new Set(nodes.map(n => n.id)); return relationships.filter(r => ids.has(r.fromId) && ids.has(r.toId)); }
 

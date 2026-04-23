@@ -11,6 +11,7 @@ import {
   LAYOUT_TYPES, LAYOUT_LABELS, PRIORITY_ICONS, MARKER_ICONS,
   STICKER_LIST, COLOR_SCHEMES, TEMPLATES,
   loadFromLocalStorage, saveToLocalStorage,
+  updateRelationshipControl,
 } from './dataModel';
 import { layoutMindMap, getConnectionPaths, getRelationshipPaths, fitToView } from './layout';
 import { getBranchColor, getTextColor, THEMES } from './theme';
@@ -56,6 +57,7 @@ function App() {
   const [relationships, setRelationships] = useState(() => _saved?.relationships || []);
   const [linkingFromId, setLinkingFromId] = useState(null);
   const [selectedRelId, setSelectedRelId] = useState(null);
+  const [draggingRel, setDraggingRel] = useState(null); // { relId }
   const [filter, setFilter] = useState(null);
   const [canvasName, setCanvasName] = useState('画布 1');
   const [canvases, setCanvases] = useState(() => _saved?.canvases || []);
@@ -175,19 +177,40 @@ function App() {
   const handleDeleteRelationship = useCallback((relId) => { setRelationships(removeRelationship(relationships, relId)); setSelectedRelId(null); }, [relationships]);
   const handleRelClick = useCallback((relId) => { setSelectedRelId(relId); }, []);
 
+  const clientToContentPoint = useCallback((clientX, clientY) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    const x = (clientX - rect.left - pan.x) / scale;
+    const y = (clientY - rect.top - pan.y) / scale;
+    return { x, y };
+  }, [pan.x, pan.y, scale]);
+
+  const handleRelControlMouseDown = useCallback((e, relId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedRelId(relId);
+    setDraggingRel({ relId });
+  }, []);
+
   const handleCanvasMouseDown = useCallback((e) => {
     if (e.button === 0) {
       const nodeEl = e.target.closest('.mindmap-node');
-      if (!nodeEl) { setSelectedId(null); setEditingId(null); setLinkingFromId(null); setSelectedRelId(null); setSelectedIds(new Set()); setIsPanning(true); setPanStart({ x: e.clientX, y: e.clientY }); setPanStartOffset({ x: pan.x, y: pan.y }); }
+      if (!nodeEl) { setSelectedId(null); setEditingId(null); setLinkingFromId(null); setSelectedRelId(null); setSelectedIds(new Set()); if (!draggingRel) { setIsPanning(true); setPanStart({ x: e.clientX, y: e.clientY }); setPanStartOffset({ x: pan.x, y: pan.y }); } }
       setContextMenu(null);
     }
-  }, [pan]);
+  }, [pan, draggingRel]);
 
   const handleCanvasMouseMove = useCallback((e) => {
+    if (draggingRel) {
+      const p = clientToContentPoint(e.clientX, e.clientY);
+      if (!p) return;
+      setRelationships(prev => updateRelationshipControl(prev, draggingRel.relId, p));
+      return;
+    }
     if (isPanning) { setPan({ x: panStartOffset.x + e.clientX - panStart.x, y: panStartOffset.y + e.clientY - panStart.y }); }
-  }, [isPanning, panStart, panStartOffset]);
+  }, [draggingRel, clientToContentPoint, isPanning, panStart, panStartOffset]);
 
-  const handleCanvasMouseUp = useCallback(() => { setIsPanning(false); }, []);
+  const handleCanvasMouseUp = useCallback(() => { setIsPanning(false); setDraggingRel(null); }, []);
 
   const handleWheel = useCallback((e) => {
     e.preventDefault();
@@ -452,6 +475,13 @@ function App() {
                 <path d={rp.pathData} stroke={selectedRelId === rp.relId ? '#ff6b6b' : '#a29bfe'} strokeWidth={selectedRelId === rp.relId ? 3.5 : 3} strokeDasharray="6 3" strokeLinecap="round" fill="none" opacity={selectedRelId === rp.relId ? 1 : 0.9} />
                 <path d={rp.pathData} stroke="transparent" strokeWidth="14" fill="none" />
                 {rp.label && <text x={rp.midX} y={rp.midY - 6} textAnchor="middle" fill={selectedRelId === rp.relId ? '#ff6b6b' : '#a29bfe'} fontSize="11" fontWeight="600">{rp.label}</text>}
+                {selectedRelId === rp.relId && (
+                  <g onMouseDown={(e) => handleRelControlMouseDown(e, rp.relId)} style={{ cursor: 'grab' }}>
+                    <circle cx={rp.controlX} cy={rp.controlY} r="8" fill={theme.canvasBg} opacity="0.8" />
+                    <circle cx={rp.controlX} cy={rp.controlY} r="5" fill="#ffffff" opacity="0.95" />
+                    <circle cx={rp.controlX} cy={rp.controlY} r="3" fill="#a29bfe" opacity="1" />
+                  </g>
+                )}
               </g>
             ))}
           </svg>
